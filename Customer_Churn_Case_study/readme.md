@@ -36,5 +36,8 @@ Confusion Matrix: [[TN FP][FN TP]]
  [1336 2436]]
  
 Random Forest and Gradient Boosting perform closely in terms test scores. Thus we look more closely into their feature importance ranking:
-![alt text](RF_feat_imp.png)
-![alt text](GB_feat_imp.png)
+![alt text](RandomForestClassifier_feat_imp.png)
+![alt text](GradientBoostingClassifier_feat_imp.png)
+
+Partial Dependence Graph for Gradient Boosting:
+![alt text](partial_dependence.jpg)
