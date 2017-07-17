@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import io
 import spacy
-from nltk.corpus import stopwords
+import pickle
 from sqlalchemy import create_engine
 from textblob import Word, TextBlob
 from itertools import chain
@@ -29,10 +28,7 @@ def extract_feat_opinion_by_sent_base(df_reviews):
             doc =nlp(rev)
             for sent in doc.sents:
                 feat = ''
-                #print sent
-                #print [(w,eng.check(w)) for w in sent if w.pos_ !='PUNCT']
-                #print 1.0*sum([1 for w in sent if eng.check(w) and w.pos_ != 'PUNCT'])/len([w for w in sent if w.pos_ != 'PUNCT'])
-                if len(sent)>1 and 1.0 * sum([1 for w in sent if eng.check(w) and w.pos_ != 'PUNCT'])/len([w for w in sent if w.pos_ != 'PUNCT'])>0.5:
+                if 1.0 * sum([1 for w in sent if eng.check(w) and w.pos_ != 'PUNCT'])/max(1,len([w for w in sent if w.pos_ != 'PUNCT']))>0.5:
                     for i,d in enumerate(sent):
                         if skip == 0:
                             if d.pos_ in ['NOUN','PROPN']:
@@ -109,7 +105,7 @@ def classify_orie(sentiment):
     elif pol <0: return 'Negative'
     else: return 'Neutral'
 
-def pull_review_data(engine,city,min_reviews,neighborhood, l_id='id'):
+def pull_review_data(engine,city,min_reviews,neighbourhood='neighbourhood', l_id='id'):
 
     qry = '''
         select id, name, description, neighbourhood, neighbourhood_cleansed, review_scores_rating,
@@ -117,9 +113,9 @@ def pull_review_data(engine,city,min_reviews,neighborhood, l_id='id'):
         review_scores_communication,review_scores_location,review_scores_value,number_of_reviews,review_id, review_text
         from listings l inner join reviews r on l.id = r.listing_id
         where l.source_city ='{}'
-        and neighbourhood = '{}'
+        and neighbourhood = {}
         and number_of_reviews >{}
-        and id = {}'''.format(city, neighborhood, min_reviews,l_id)
+        and id = {}'''.format(city, neighbourhood, min_reviews,l_id)
     return pd.read_sql_query(qry, engine)
 
 
@@ -143,9 +139,11 @@ if __name__=='__main__':
 
     engine = create_engine('postgresql://clarkrds:capstone17@postgressql-capstone.cw4n5kyvg7ex.us-east-1.rds.amazonaws.com:5432/AirbnbDB')
 
-    data = pull_review_data(engine=engine,city='SanFrancisco',min_reviews=30,l_id=311259)
+    data = pull_review_data(engine=engine,city='SanFrancisco',min_reviews=0, neighbourhood="'Mission District'")#neighborhood='Mission District')
     test_reviews = data[['id','review_id','review_text']]
     candidate_feat, candfeat_df,syno_used = extract_feat_opinion_by_sent_base(test_reviews)
     feat_opinion, top10_feat_sent = summarize(candfeat_df)
+    pickle.dump(feat_opinion, open( "feat_opinion_mission.p", "wb" ) )
+    pickle.dump(top10_feat_sent, open( "top10_feat_sent_mission.p", "wb" ) )
     print feat_opinion[:10]
     print top10_feat_sent

@@ -1,8 +1,11 @@
 from sqlalchemy import create_engine
+from main import pull_review_data
 import io
 import pandas as pd
 import glob
 import time
+import spacy
+
 
 def import_csv_to_postgresql (engine,table):
     conn= engine.raw_connection()
@@ -40,6 +43,21 @@ def import_csv_to_postgresql (engine,table):
             end = time.time()
             print 'loading completed: {} rows in {}s'.format(rows, end - start)
 
+def create_testset(engine, city='SanFrancisco', min_reviews=50, num_listing = 10):
+    conn= engine.raw_connection()
+    cur = conn.cursor()
+    data = pull_review_data(engine,city,min_reviews)
+
+
+
+    s_buf = io.BytesIO()
+    df.to_csv(s_buf, index=False, header=True, sep=',')
+    s_buf.seek(0)
+    #run copy method to load into PostgresSQL table:
+    cur.copy_expert("""COPY {} FROM STDIN WITH (FORMAT CSV, HEADER TRUE, DELIMITER ',')""".format(table), s_buf)
+    conn.commit()
+
+
 if __name__ == "__main__":
     host = 'postgressql-capstone.cw4n5kyvg7ex.us-east-1.rds.amazonaws.com:5432'
     dbname = 'AirbnbDB'
@@ -51,4 +69,4 @@ if __name__ == "__main__":
     #conn = psycopg2.connect("host={} port='5432' dbname={} user={} password={}".format(host,dbname,user,password))
     #import_csv_to_postgresql(conn,'reviews')
     #import_csv_to_postgresql(engine,'listings')
-    import_csv_to_postgresql(engine,'calendar')
+    #import_csv_to_postgresql(engine,'calendar')
