@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import io
-import spacy
 import pickle
+import spacy
 from sqlalchemy import create_engine
 from textblob import Word, TextBlob
 from itertools import chain
@@ -16,7 +16,7 @@ pd.set_option('display.max_colwidth', -1)
 
 def extract_feat_opinion_by_sent_base(df_reviews):
 
-    manual_stop = ['so','other','-PRON-']
+    manual_stop = ['extremely','so','other','-PRON-']
     df_cand_feat = pd.DataFrame(columns = ['review_id','review_sent','feats','sentiment','orientation'])
     skip=0
     cand_feat={}
@@ -100,10 +100,25 @@ def extract_feat_opinion_by_sent_base(df_reviews):
 
 
 def classify_orie(sentiment):
-    pol = TextBlob(sentiment).sentiment.polarity
-    if pol > 0: return 'Positive'
-    elif pol <0: return 'Negative'
-    else: return 'Neutral'
+    try:
+        pol = TextBlob(sentiment).sentiment.polarity
+        if pol > 0:
+            if 'sketchy' in sentiment.lower():
+                return 'Negative'
+            else:
+                return 'Positive'
+        elif pol <0: 
+            if 'cozy' in sentiment.lower():
+                return 'Positive'
+            else:
+                return 'Negative'   
+        else:
+            if 'helpful' in sentiment.lower():
+                return 'Positive'
+            else:
+                 return 'Neutral'
+    except:
+        return 'Neutral'
 
 def pull_review_data(engine,city,min_reviews,neighbourhood='neighbourhood', l_id='id'):
 
@@ -138,12 +153,12 @@ def summarize(candfeat_df):
 if __name__=='__main__':
 
     engine = create_engine('postgresql://clarkrds:capstone17@postgressql-capstone.cw4n5kyvg7ex.us-east-1.rds.amazonaws.com:5432/AirbnbDB')
-
-    data = pull_review_data(engine=engine,city='SanFrancisco',min_reviews=0, neighbourhood="'Mission District'")#neighborhood='Mission District')
+    neigh='Tenderloin'
+    data = pull_review_data(engine=engine,city='SanFrancisco',min_reviews=0, neighbourhood="'{}'".format(neigh))
     test_reviews = data[['id','review_id','review_text']]
     candidate_feat, candfeat_df,syno_used = extract_feat_opinion_by_sent_base(test_reviews)
     feat_opinion, top10_feat_sent = summarize(candfeat_df)
-    pickle.dump(feat_opinion, open( "feat_opinion_mission.p", "wb" ) )
-    pickle.dump(top10_feat_sent, open( "top10_feat_sent_mission.p", "wb" ) )
+    pickle.dump(feat_opinion, open( "feat_opinion_{}.p".format(neigh), "wb" ) )
+    pickle.dump(top10_feat_sent, open( "top10_feat_sent_{}.p".format(neigh), "wb" ) )
     print feat_opinion[:10]
     print top10_feat_sent
