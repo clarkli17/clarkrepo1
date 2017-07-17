@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Aspect Mining</title>
+    </head>
+    <body>
+        <h1>Aspect Mining Labeling</h1>
+        <div>
+            <form action="http://127.0.0.1:5000/handle_result" method="POST">
+                <div>
+                    <table>
+                        <tr>
+                            <th> Listing_id </th>
+                            <th> Review_id </th>
+                            <th> Review_sentence </th>
+                            <th> Aspect #1 </th>
+                            <th> Sentiment Orientation #1 </th>
+                            <th> Aspect #2 </th>
+                            <th> Sentiment Orientation #2 </th>
+                            <th> Aspect #3 </th>
+                            <th> Sentiment Orientation #3 </th>
+                        </tr>
+                        {% for i, entry in data %}
+                        <tr>
+                            <td>{% if i==0 %}{{entry[0]}}{% endif %}</td>
+                            <td>{{ entry[1] }}</td>
+                            <td>{{ entry[2] }}</td>
+                            {% for j in num_aspects %}
+                            <td><input type = "text" id = {{ i }}+{{ j }}+"feat" name = {{ i }}+{{ j }}+"feat" list= {{ i }}+{{ j }}+"features">
+                                <datalist id= {{ i }}+{{ j }}+"features">
+                                {% for f in entry[3] %}
+                                <option value= "{{ f }}">{{ f }}</option>
+                                {% endfor %}
+                                </datalist>
+
+                            </td>
+                            <td><select size = "1" id ={{ i }}+{{ j }}+"sentiment" name = {{ i }}+{{ j }}+"sentiment">
+                                <option value="Positive">Positive</option>
+                                <option value="Neutral">Neutral</option>
+                                <option value="Negative">Negative</option>
+                            </select></td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                <p><input type="submit" name="edit" value="Send"></p>
+            </form>
+        </div>
+    </body>
+</html>
